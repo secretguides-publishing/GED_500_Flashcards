@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📚 500 GED Flashcards | Quick Review | SecretGuides</title>
+    <meta name="author" content="SecretGuides Publishing Team">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); min-height: 100vh; color: #fff; }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        
+        header { text-align: center; padding: 30px 20px; }
+        header h1 { font-size: 2.5rem; margin-bottom: 10px; background: linear-gradient(135deg, #e94560, #ff6b6b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        header p { color: #94a3b8; font-size: 1.1rem; margin-bottom: 15px; }
+        .stats-bar { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 15px; }
+        .stat-item { background: rgba(255,255,255,0.05); padding: 10px 20px; border-radius: 20px; font-size: 0.9rem; }
+        .stat-item span { font-weight: 700; }
+        .stat-item.learned span { color: #10b981; }
+        .stat-item.review span { color: #f59e0b; }
+        .stat-item.total span { color: #e94560; }
+        
+        .controls { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 25px; }
+        .filter-btn { padding: 10px 20px; border: 2px solid rgba(255,255,255,0.2); border-radius: 25px; background: transparent; color: #fff; cursor: pointer; font-weight: 600; transition: all 0.3s; font-size: 0.9rem; }
+        .filter-btn:hover { background: rgba(255,255,255,0.1); }
+        .filter-btn.active { border-color: #e94560; background: rgba(233,69,96,0.2); }
+        .filter-btn.rla.active { border-color: #f59e0b; background: rgba(245,158,11,0.2); }
+        .filter-btn.math.active { border-color: #10b981; background: rgba(16,185,129,0.2); }
+        .filter-btn.science.active { border-color: #3b82f6; background: rgba(59,130,246,0.2); }
+        .filter-btn.social.active { border-color: #ef4444; background: rgba(239,68,68,0.2); }
+        
+        .action-btns { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .action-btn { padding: 10px 20px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.3s; font-size: 0.9rem; }
+        .action-btn.shuffle { background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: #fff; }
+        .action-btn.reset { background: rgba(255,255,255,0.1); color: #fff; }
+        .action-btn:hover { transform: translateY(-2px); }
+        
+        .progress-bar { height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: 25px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #e94560, #ff6b6b); border-radius: 10px; transition: width 0.3s; }
+        
+        .flashcard-container { perspective: 1000px; margin-bottom: 25px; }
+        .flashcard { width: 100%; min-height: 350px; position: relative; transform-style: preserve-3d; transition: transform 0.6s; cursor: pointer; }
+        .flashcard.flipped { transform: rotateY(180deg); }
+        
+        .card-face { position: absolute; width: 100%; min-height: 350px; backface-visibility: hidden; border-radius: 25px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 40px; text-align: center; }
+        
+        .card-front { background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)); border: 2px solid rgba(255,255,255,0.1); }
+        .card-front.rla { border-top: 5px solid #f59e0b; }
+        .card-front.math { border-top: 5px solid #10b981; }
+        .card-front.science { border-top: 5px solid #3b82f6; }
+        .card-front.social { border-top: 5px solid #ef4444; }
+        
+        .card-back { background: linear-gradient(145deg, #e94560, #ff6b6b); transform: rotateY(180deg); }
+        
+        .card-category { position: absolute; top: 20px; left: 25px; padding: 5px 15px; border-radius: 15px; font-size: 0.8rem; font-weight: 600; }
+        .card-category.rla { background: rgba(245,158,11,0.2); color: #f59e0b; }
+        .card-category.math { background: rgba(16,185,129,0.2); color: #10b981; }
+        .card-category.science { background: rgba(59,130,246,0.2); color: #3b82f6; }
+        .card-category.social { background: rgba(239,68,68,0.2); color: #ef4444; }
+        
+        .card-number { position: absolute; top: 20px; right: 25px; color: #64748b; font-size: 0.9rem; }
+        .card-back .card-number { color: rgba(255,255,255,0.7); }
+        
+        .card-question { font-size: 1.4rem; line-height: 1.6; margin-bottom: 20px; }
+        .card-answer { font-size: 1.3rem; line-height: 1.6; color: #fff; }
+        .card-hint { font-size: 0.9rem; color: #94a3b8; margin-top: 15px; }
+        .card-back .card-hint { color: rgba(255,255,255,0.8); }
+        
+        .flip-hint { position: absolute; bottom: 20px; color: #64748b; font-size: 0.85rem; }
+        .card-back .flip-hint { color: rgba(255,255,255,0.7); }
+        
+        .nav-buttons { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .nav-btn { padding: 15px 35px; border: none; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.3s; }
+        .nav-btn.prev { background: rgba(255,255,255,0.1); color: #fff; }
+        .nav-btn.next { background: linear-gradient(135deg, #e94560, #ff6b6b); color: #fff; }
+        .nav-btn:hover { transform: translateY(-2px); }
+        .nav-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        
+        .rating-buttons { display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; }
+        .rate-btn { padding: 12px 25px; border: 2px solid; border-radius: 10px; background: transparent; cursor: pointer; font-weight: 600; transition: all 0.3s; font-size: 0.9rem; }
+        .rate-btn.learned { border-color: #10b981; color: #10b981; }
+        .rate-btn.learned:hover, .rate-btn.learned.active { background: #10b981; color: #fff; }
+        .rate-btn.review { border-color: #f59e0b; color: #f59e0b; }
+        .rate-btn.review:hover, .rate-btn.review.active { background: #f59e0b; color: #000; }
+        
+        .keyboard-hints { text-align: center; color: #64748b; font-size: 0.85rem; margin-bottom: 20px; }
+        .keyboard-hints kbd { background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 5px; margin: 0 3px; }
+        
+        .subject-progress { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 30px; }
+        .subject-card { background: rgba(255,255,255,0.05); border-radius: 15px; padding: 20px; }
+        .subject-card h4 { margin-bottom: 10px; font-size: 1rem; }
+        .subject-card.rla h4 { color: #f59e0b; }
+        .subject-card.math h4 { color: #10b981; }
+        .subject-card.science h4 { color: #3b82f6; }
+        .subject-card.social h4 { color: #ef4444; }
+        .subject-bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; margin-bottom: 8px; }
+        .subject-fill { height: 100%; border-radius: 5px; }
+        .subject-card.rla .subject-fill { background: #f59e0b; }
+        .subject-card.math .subject-fill { background: #10b981; }
+        .subject-card.science .subject-fill { background: #3b82f6; }
+        .subject-card.social .subject-fill { background: #ef4444; }
+        .subject-stats { display: flex; justify-content: space-between; font-size: 0.85rem; color: #94a3b8; }
+        
+        footer { text-align: center; padding: 30px 20px; margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); }
+        footer p { color: #64748b; font-size: 0.9rem; }
+        footer .author { color: #e94560; font-weight: 600; }
+        
+        @media (max-width: 768px) {
+            header h1 { font-size: 1.8rem; }
+            .card-face { padding: 30px 20px; min-height: 300px; }
+            .card-question, .card-answer { font-size: 1.1rem; }
+            .flashcard { min-height: 300px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 500 GED Flashcards</h1>
+            <p>Quick review for all four subjects</p>
+            <div class="stats-bar">
+                <div class="stat-item learned">✅ Learned: <span id="learnedCount">0</span></div>
+                <div class="stat-item review">🔄 Review: <span id="reviewCount">0</span></div>
+                <div class="stat-item total">📚 Total: <span id="totalCount">500</span></div>
+            </div>
+        </header>
+
+        <div class="controls">
+            <button class="filter-btn active" onclick="filterCards('all')">📚 All (500)</button>
+            <button class="filter-btn rla" onclick="filterCards('rla')">📖 RLA (125)</button>
+            <button class="filter-btn math" onclick="filterCards('math')">🔢 Math (125)</button>
+            <button class="filter-btn science" onclick="filterCards('science')">🔬 Science (125)</button>
+            <button class="filter-btn social" onclick="filterCards('social')">🌍 Social (125)</button>
+        </div>
+
+        <div class="action-btns">
+            <button class="action-btn shuffle" onclick="shuffleCards()">🔀 Shuffle</button>
+            <button class="action-btn reset" onclick="resetProgress()">🔄 Reset Progress</button>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+
+        <div class="flashcard-container">
+            <div class="flashcard" id="flashcard" onclick="flipCard()">
+                <div class="card-face card-front" id="cardFront">
+                    <span class="card-category" id="cardCategory">RLA</span>
+                    <span class="card-number" id="cardNumber">1/500</span>
+                    <div class="card-question" id="cardQuestion">Loading...</div>
+                    <div class="card-hint">Click or press Space to reveal answer</div>
+                    <div class="flip-hint">👆 Tap to flip</div>
+                </div>
+                <div class="card-face card-back">
+                    <span class="card-category" id="cardCategoryBack">RLA</span>
+                    <span class="card-number" id="cardNumberBack">1/500</span>
+                    <div class="card-answer" id="cardAnswer">Answer here</div>
+                    <div class="flip-hint">👆 Tap to flip back</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="nav-btn prev" onclick="prevCard()">← Previous</button>
+            <button class="nav-btn next" onclick="nextCard()">Next →</button>
+        </div>
+
+        <div class="rating-buttons">
+            <button class="rate-btn learned" onclick="markCard('learned')">✅ Got it!</button>
+            <button class="rate-btn review" onclick="markCard('review')">🔄 Need Review</button>
+        </div>
+
+        <div class="keyboard-hints">
+            <kbd>←</kbd> Previous <kbd>→</kbd> Next <kbd>Space</kbd> Flip <kbd>1</kbd> Learned <kbd>2</kbd> Review
+        </div>
+
+        <div class="subject-progress">
+            <div class="subject-card rla">
+                <h4>📖 Language Arts</h4>
+                <div class="subject-bar"><div class="subject-fill" id="rlaFill" style="width: 0%"></div></div>
+                <div class="subject-stats"><span id="rlaLearned">0</span> / 125 learned</div>
+            </div>
+            <div class="subject-card math">
+                <h4>🔢 Mathematics</h4>
+                <div class="subject-bar"><div class="subject-fill" id="mathFill" style="width: 0%"></div></div>
+                <div class="subject-stats"><span id="mathLearned">0</span> / 125 learned</div>
+            </div>
+            <div class="subject-card science">
+                <h4>🔬 Science</h4>
+                <div class="subject-bar"><div class="subject-fill" id="scienceFill" style="width: 0%"></div></div>
+                <div class="subject-stats"><span id="scienceLearned">0</span> / 125 learned</div>
+            </div>
+            <div class="subject-card social">
+                <h4>🌍 Social Studies</h4>
+                <div class="subject-bar"><div class="subject-fill" id="socialFill" style="width: 0%"></div></div>
+                <div class="subject-stats"><span id="socialLearned">0</span> / 125 learned</div>
+            </div>
+        </div>
+
+        <footer>
+            <p class="author">✍️ SecretGuides Publishing Team</p>
+            <p>© 2025 All Rights Reserved</p>
+        </footer>
+    </div>
+
+<script>
+const flashcards = [
+// RLA - Reading (1-40)
+{id:1,cat:"rla",q:"What is the main idea of a passage?",a:"The central point or most important concept the author wants to convey."},
+{id:2,cat:"rla",q:"What are supporting details?",a:"Facts, examples, or evidence that back up or explain the main idea."},
+{id:3,cat:"rla",q:"What is an inference?",a:"A conclusion drawn from evidence and reasoning, not directly stated."},
+{id:4,cat:"rla",q:"What is context clue?",a:"Words or phrases near an unknown word that help reveal its meaning."},
+{id:5,cat:"rla",q:"What is the author's purpose?",a:"The reason an author writes: to inform, persuade, or entertain."},
+{id:6,cat:"rla",q:"What is tone in writing?",a:"The author's attitude toward the subject, revealed through word choice."},
+{id:7,cat:"rla",q:"What is a primary source?",a:"A firsthand account or original document from the time period."},
+{id:8,cat:"rla",q:"What is a secondary source?",a:"Analysis or interpretation of primary sources by someone not present."},
+{id:9,cat:"rla",q:"What does 'compare' mean?",a:"To examine similarities between two or more things."},
+{id:10,cat:"rla",q:"What does 'contrast' mean?",a:"To examine differences between two or more things."},
+{id:11,cat:"rla",q:"What is theme in literature?",a:"The underlying message or central insight about life in a work."},
+{id:12,cat:"rla",q:"What is plot?",a:"The sequence of events that make up a story."},
+{id:13,cat:"rla",q:"What is characterization?",a:"How an author reveals a character's personality and traits."},
+{id:14,cat:"rla",q:"What is setting?",a:"The time and place where a story occurs."},
+{id:15,cat:"rla",q:"What is point of view?",a:"The perspective from which a story is told (1st, 2nd, or 3rd person)."},
+{id:16,cat:"rla",q:"What is first-person point of view?",a:"Narrator is a character using 'I' and 'me.'"},
+{id:17,cat:"rla",q:"What is third-person omniscient?",a:"Narrator knows all characters' thoughts and feelings."},
+{id:18,cat:"rla",q:"What is third-person limited?",a:"Narrator knows only one character's thoughts."},
+{id:19,cat:"rla",q:"What is foreshadowing?",a:"Hints or clues about events that will happen later."},
+{id:20,cat:"rla",q:"What is a flashback?",a:"A scene that interrupts to show events from the past."},
+{id:21,cat:"rla",q:"What is symbolism?",a:"Using objects to represent abstract ideas or concepts."},
+{id:22,cat:"rla",q:"What is imagery?",a:"Descriptive language appealing to the five senses."},
+{id:23,cat:"rla",q:"What is a metaphor?",a:"Direct comparison without 'like' or 'as' (life is a journey)."},
+{id:24,cat:"rla",q:"What is a simile?",a:"Comparison using 'like' or 'as' (brave as a lion)."},
+{id:25,cat:"rla",q:"What is personification?",a:"Giving human qualities to non-human things."},
+{id:26,cat:"rla",q:"What is hyperbole?",a:"Extreme exaggeration for emphasis (I've told you a million times)."},
+{id:27,cat:"rla",q:"What is alliteration?",a:"Repetition of consonant sounds at the beginning of words."},
+{id:28,cat:"rla",q:"What is onomatopoeia?",a:"Words that imitate sounds (buzz, crash, sizzle)."},
+{id:29,cat:"rla",q:"What is irony?",a:"When the opposite of what's expected occurs or is stated."},
+{id:30,cat:"rla",q:"What is verbal irony?",a:"Saying the opposite of what is meant (sarcasm)."},
+{id:31,cat:"rla",q:"What is situational irony?",a:"When events turn out opposite to expectations."},
+{id:32,cat:"rla",q:"What is dramatic irony?",a:"When the audience knows something characters don't."},
+{id:33,cat:"rla",q:"What is connotation?",a:"The emotional associations of a word beyond its definition."},
+{id:34,cat:"rla",q:"What is denotation?",a:"The literal, dictionary definition of a word."},
+{id:35,cat:"rla",q:"What is the climax of a story?",a:"The turning point or moment of highest tension."},
+{id:36,cat:"rla",q:"What is the resolution?",a:"How the conflict is resolved at the end of a story."},
+{id:37,cat:"rla",q:"What is conflict in literature?",a:"The struggle between opposing forces in a story."},
+{id:38,cat:"rla",q:"What is internal conflict?",a:"A struggle within a character's mind (person vs. self)."},
+{id:39,cat:"rla",q:"What is external conflict?",a:"A struggle between a character and an outside force."},
+{id:40,cat:"rla",q:"What is the exposition?",a:"The introduction that provides background information."},
+
+// RLA - Grammar (41-85)
+{id:41,cat:"rla",q:"What is a noun?",a:"A word that names a person, place, thing, or idea."},
+{id:42,cat:"rla",q:"What is a verb?",a:"A word that expresses action or state of being."},
+{id:43,cat:"rla",q:"What is an adjective?",a:"A word that describes or modifies a noun."},
+{id:44,cat:"rla",q:"What is an adverb?",a:"A word that modifies a verb, adjective, or another adverb."},
+{id:45,cat:"rla",q:"What is a pronoun?",a:"A word that takes the place of a noun."},
+{id:46,cat:"rla",q:"What is a preposition?",a:"A word showing relationship between nouns (in, on, at, by)."},
+{id:47,cat:"rla",q:"What is a conjunction?",a:"A word that connects words, phrases, or clauses."},
+{id:48,cat:"rla",q:"What are coordinating conjunctions?",a:"FANBOYS: For, And, Nor, But, Or, Yet, So."},
+{id:49,cat:"rla",q:"What is a simple sentence?",a:"One independent clause with a subject and verb."},
+{id:50,cat:"rla",q:"What is a compound sentence?",a:"Two independent clauses joined by a conjunction."},
+{id:51,cat:"rla",q:"What is a complex sentence?",a:"One independent clause + one or more dependent clauses."},
+{id:52,cat:"rla",q:"What is subject-verb agreement?",a:"Subjects and verbs must match in number (singular/plural)."},
+{id:53,cat:"rla",q:"When do you use 'their'?",a:"Possessive pronoun showing ownership (their house)."},
+{id:54,cat:"rla",q:"When do you use 'there'?",a:"Refers to a place or introduces a sentence."},
+{id:55,cat:"rla",q:"When do you use 'they're'?",a:"Contraction of 'they are.'"},
+{id:56,cat:"rla",q:"When do you use 'your'?",a:"Possessive pronoun (your book)."},
+{id:57,cat:"rla",q:"When do you use 'you're'?",a:"Contraction of 'you are.'"},
+{id:58,cat:"rla",q:"When do you use 'its'?",a:"Possessive pronoun (The dog wagged its tail)."},
+{id:59,cat:"rla",q:"When do you use 'it's'?",a:"Contraction of 'it is' or 'it has.'"},
+{id:60,cat:"rla",q:"When do you use 'affect'?",a:"Usually a verb meaning to influence."},
+{id:61,cat:"rla",q:"When do you use 'effect'?",a:"Usually a noun meaning result or outcome."},
+{id:62,cat:"rla",q:"When do you use 'then'?",a:"Refers to time or sequence."},
+{id:63,cat:"rla",q:"When do you use 'than'?",a:"Used for comparisons."},
+{id:64,cat:"rla",q:"When do you use 'fewer'?",a:"With countable nouns (fewer books)."},
+{id:65,cat:"rla",q:"When do you use 'less'?",a:"With uncountable nouns (less water)."},
+{id:66,cat:"rla",q:"What is a comma splice?",a:"Incorrectly joining two sentences with just a comma."},
+{id:67,cat:"rla",q:"What is a run-on sentence?",a:"Two complete sentences joined without proper punctuation."},
+{id:68,cat:"rla",q:"What is a sentence fragment?",a:"An incomplete sentence missing a subject or verb."},
+{id:69,cat:"rla",q:"When do you use a semicolon?",a:"To join two related independent clauses without a conjunction."},
+{id:70,cat:"rla",q:"When do you use a colon?",a:"To introduce a list, explanation, or quotation."},
+{id:71,cat:"rla",q:"What is a dangling modifier?",a:"A modifier that doesn't clearly connect to what it modifies."},
+{id:72,cat:"rla",q:"What is parallel structure?",a:"Using the same grammatical form for similar ideas in a series."},
+{id:73,cat:"rla",q:"What is active voice?",a:"Subject performs the action (The dog bit the man)."},
+{id:74,cat:"rla",q:"What is passive voice?",a:"Subject receives the action (The man was bitten by the dog)."},
+{id:75,cat:"rla",q:"What is a possessive noun?",a:"Shows ownership, formed with apostrophe + s (dog's bone)."},
+{id:76,cat:"rla",q:"How do you make plurals possessive?",a:"Add apostrophe after the s (dogs' bones) for regular plurals."},
+{id:77,cat:"rla",q:"What is an antecedent?",a:"The noun that a pronoun refers to or replaces."},
+{id:78,cat:"rla",q:"What is pronoun-antecedent agreement?",a:"Pronouns must match their antecedents in number and gender."},
+{id:79,cat:"rla",q:"When do you use 'who'?",a:"For subjects (Who called?)."},
+{id:80,cat:"rla",q:"When do you use 'whom'?",a:"For objects (To whom did you speak?)."},
+{id:81,cat:"rla",q:"When do you use 'which'?",a:"For things, with non-restrictive clauses."},
+{id:82,cat:"rla",q:"When do you use 'that'?",a:"For things, with restrictive/essential clauses."},
+{id:83,cat:"rla",q:"What is a restrictive clause?",a:"Essential information that can't be removed (no commas)."},
+{id:84,cat:"rla",q:"What is a non-restrictive clause?",a:"Extra information that can be removed (use commas)."},
+{id:85,cat:"rla",q:"When do you capitalize?",a:"Proper nouns, first words, titles, and the pronoun 'I.'"},
+
+// RLA - Writing (86-125)
+{id:86,cat:"rla",q:"What is a thesis statement?",a:"A sentence stating the main argument of an essay."},
+{id:87,cat:"rla",q:"Where is a thesis statement located?",a:"Usually at the end of the introduction paragraph."},
+{id:88,cat:"rla",q:"What is a topic sentence?",a:"The first sentence stating the paragraph's main idea."},
+{id:89,cat:"rla",q:"What is a hook in writing?",a:"An opening that grabs the reader's attention."},
+{id:90,cat:"rla",q:"What is ethos?",a:"Appeal to credibility and trustworthiness."},
+{id:91,cat:"rla",q:"What is pathos?",a:"Appeal to emotions."},
+{id:92,cat:"rla",q:"What is logos?",a:"Appeal to logic and reasoning."},
+{id:93,cat:"rla",q:"What is a counterargument?",a:"An opposing viewpoint addressed and refuted in your essay."},
+{id:94,cat:"rla",q:"What is a transition word?",a:"Words that connect ideas (however, therefore, furthermore)."},
+{id:95,cat:"rla",q:"What does 'however' signal?",a:"Contrast or exception to the previous point."},
+{id:96,cat:"rla",q:"What does 'therefore' signal?",a:"Cause and effect or conclusion."},
+{id:97,cat:"rla",q:"What does 'furthermore' signal?",a:"Addition of supporting information."},
+{id:98,cat:"rla",q:"What is paraphrasing?",a:"Restating ideas in your own words while keeping the meaning."},
+{id:99,cat:"rla",q:"What is summarizing?",a:"Condensing main points into a brief overview."},
+{id:100,cat:"rla",q:"What is plagiarism?",a:"Using someone else's words or ideas without credit."},
+{id:101,cat:"rla",q:"What is a citation?",a:"A reference giving credit to a source."},
+{id:102,cat:"rla",q:"What makes a conclusion effective?",a:"Restates thesis, summarizes points, provides closure."},
+{id:103,cat:"rla",q:"What is an ad hominem fallacy?",a:"Attacking the person instead of the argument."},
+{id:104,cat:"rla",q:"What is a straw man fallacy?",a:"Misrepresenting someone's argument to attack it."},
+{id:105,cat:"rla",q:"What is a hasty generalization?",a:"Drawing broad conclusions from limited evidence."},
+{id:106,cat:"rla",q:"What is circular reasoning?",a:"Using the conclusion as a premise (begging the question)."},
+{id:107,cat:"rla",q:"What is a red herring?",a:"Introducing an irrelevant topic to divert attention."},
+{id:108,cat:"rla",q:"What is an appeal to authority fallacy?",a:"Using an unqualified person as an expert."},
+{id:109,cat:"rla",q:"What is bandwagon fallacy?",a:"Arguing something is true because many believe it."},
+{id:110,cat:"rla",q:"What is false dilemma?",a:"Presenting only two options when more exist."},
+{id:111,cat:"rla",q:"What is slippery slope?",a:"Claiming one event will lead to extreme consequences."},
+{id:112,cat:"rla",q:"What is coherence in writing?",a:"Logical flow and connection between ideas."},
+{id:113,cat:"rla",q:"What is unity in a paragraph?",a:"All sentences support the topic sentence."},
+{id:114,cat:"rla",q:"What is formal writing tone?",a:"Professional, objective language without slang."},
+{id:115,cat:"rla",q:"What is audience awareness?",a:"Adjusting writing style for your intended readers."},
+{id:116,cat:"rla",q:"What is chronological order?",a:"Organizing events in time sequence."},
+{id:117,cat:"rla",q:"What is cause and effect organization?",a:"Explaining why something happened and its results."},
+{id:118,cat:"rla",q:"What is compare/contrast organization?",a:"Examining similarities and differences."},
+{id:119,cat:"rla",q:"What is problem-solution organization?",a:"Presenting a problem and proposing solutions."},
+{id:120,cat:"rla",q:"What is order of importance?",a:"Organizing from least to most important (or vice versa)."},
+{id:121,cat:"rla",q:"What is revision in writing?",a:"Improving content, organization, and clarity."},
+{id:122,cat:"rla",q:"What is editing?",a:"Correcting grammar, spelling, and punctuation."},
+{id:123,cat:"rla",q:"What is proofreading?",a:"Final check for typos and errors before publishing."},
+{id:124,cat:"rla",q:"What makes evidence credible?",a:"From reliable sources, current, and relevant."},
+{id:125,cat:"rla",q:"What is a rhetorical question?",a:"A question asked for effect, not expecting an answer."},
+
+// MATH - Basic Operations (126-160)
+{id:126,cat:"math",q:"What is the order of operations?",a:"PEMDAS: Parentheses, Exponents, Multiply/Divide, Add/Subtract."},
+{id:127,cat:"math",q:"What is an integer?",a:"A whole number (positive, negative, or zero)."},
+{id:128,cat:"math",q:"What is an absolute value?",a:"Distance from zero; always positive. |−5| = 5"},
+{id:129,cat:"math",q:"How do you add negative numbers?",a:"Adding a negative is like subtracting: 5 + (−3) = 2"},
+{id:130,cat:"math",q:"How do you multiply negative numbers?",a:"Negative × Negative = Positive; Negative × Positive = Negative"},
+{id:131,cat:"math",q:"What is a prime number?",a:"A number divisible only by 1 and itself (2, 3, 5, 7, 11...)."},
+{id:132,cat:"math",q:"What is a composite number?",a:"A number with more than two factors."},
+{id:133,cat:"math",q:"What is GCF?",a:"Greatest Common Factor: largest number that divides evenly into two numbers."},
+{id:134,cat:"math",q:"What is LCM?",a:"Least Common Multiple: smallest number both numbers divide into."},
+{id:135,cat:"math",q:"How do you convert fraction to decimal?",a:"Divide numerator by denominator. 3/4 = 0.75"},
+{id:136,cat:"math",q:"How do you convert decimal to percent?",a:"Multiply by 100. 0.75 = 75%"},
+{id:137,cat:"math",q:"How do you convert percent to decimal?",a:"Divide by 100. 75% = 0.75"},
+{id:138,cat:"math",q:"How do you add fractions with same denominator?",a:"Add numerators, keep denominator. 2/5 + 1/5 = 3/5"},
+{id:139,cat:"math",q:"How do you add fractions with different denominators?",a:"Find common denominator, then add numerators."},
+{id:140,cat:"math",q:"How do you multiply fractions?",a:"Multiply numerators, multiply denominators. 2/3 × 1/4 = 2/12 = 1/6"},
+{id:141,cat:"math",q:"How do you divide fractions?",a:"Multiply by the reciprocal. 2/3 ÷ 1/4 = 2/3 × 4/1 = 8/3"},
+{id:142,cat:"math",q:"What is a reciprocal?",a:"A fraction flipped. Reciprocal of 3/4 is 4/3."},
+{id:143,cat:"math",q:"What is a mixed number?",a:"Whole number plus fraction: 2 1/2"},
+{id:144,cat:"math",q:"How do you convert mixed to improper?",a:"Multiply whole by denominator, add numerator. 2 1/2 = 5/2"},
+{id:145,cat:"math",q:"What does percent mean?",a:"Per hundred. 25% = 25/100 = 0.25"},
+{id:146,cat:"math",q:"How do you find percent of a number?",a:"Convert to decimal and multiply. 20% of 50 = 0.20 × 50 = 10"},
+{id:147,cat:"math",q:"What is percent change formula?",a:"(New − Original) / Original × 100"},
+{id:148,cat:"math",q:"What is a ratio?",a:"Comparison of two quantities (3:2 or 3 to 2)."},
+{id:149,cat:"math",q:"What is a proportion?",a:"An equation stating two ratios are equal. a/b = c/d"},
+{id:150,cat:"math",q:"What is cross multiplication?",a:"To solve proportions: a/b = c/d → ad = bc"},
+{id:151,cat:"math",q:"What is scientific notation?",a:"Number as coefficient times power of 10. 5,000 = 5 × 10³"},
+{id:152,cat:"math",q:"What is a square root?",a:"Number that multiplied by itself gives original. √25 = 5"},
+{id:153,cat:"math",q:"What is an exponent?",a:"Shows how many times to multiply. 2³ = 2×2×2 = 8"},
+{id:154,cat:"math",q:"What is x⁰?",a:"Any number to the 0 power equals 1 (except 0)."},
+{id:155,cat:"math",q:"What is x⁻¹?",a:"Negative exponent means reciprocal. x⁻¹ = 1/x"},
+{id:156,cat:"math",q:"How do you multiply exponents with same base?",a:"Add the exponents. x³ × x² = x⁵"},
+{id:157,cat:"math",q:"How do you divide exponents with same base?",a:"Subtract the exponents. x⁵ ÷ x² = x³"},
+{id:158,cat:"math",q:"What is (xᵐ)ⁿ?",a:"Power to a power: multiply exponents. (x²)³ = x⁶"},
+{id:159,cat:"math",q:"What are perfect squares?",a:"1, 4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144..."},
+{id:160,cat:"math",q:"What is the square root of 144?",a:"12 (because 12 × 12 = 144)"},
+
+// MATH - Algebra (161-200)
+{id:161,cat:"math",q:"What is a variable?",a:"A letter representing an unknown value."},
+{id:162,cat:"math",q:"What is an expression?",a:"Numbers, variables, and operations without an equals sign."},
+{id:163,cat:"math",q:"What is an equation?",a:"Mathematical statement with equals sign showing two things are equal."},
+{id:164,cat:"math",q:"How do you solve one-step equations?",a:"Use inverse operations to isolate the variable."},
+{id:165,cat:"math",q:"What is the distributive property?",a:"a(b + c) = ab + ac"},
+{id:166,cat:"math",q:"What are like terms?",a:"Terms with the same variables and exponents."},
+{id:167,cat:"math",q:"How do you combine like terms?",a:"Add or subtract coefficients of like terms."},
+{id:168,cat:"math",q:"What is slope?",a:"Rise over run; rate of change; m = (y₂−y₁)/(x₂−x₁)"},
+{id:169,cat:"math",q:"What is slope-intercept form?",a:"y = mx + b (m = slope, b = y-intercept)"},
+{id:170,cat:"math",q:"What is the y-intercept?",a:"Where the line crosses the y-axis (x = 0)."},
+{id:171,cat:"math",q:"What is a positive slope?",a:"Line goes up from left to right."},
+{id:172,cat:"math",q:"What is a negative slope?",a:"Line goes down from left to right."},
+{id:173,cat:"math",q:"What is zero slope?",a:"Horizontal line (y = constant)."},
+{id:174,cat:"math",q:"What is undefined slope?",a:"Vertical line (x = constant)."},
+{id:175,cat:"math",q:"What are parallel lines?",a:"Lines with the same slope that never intersect."},
+{id:176,cat:"math",q:"What are perpendicular lines?",a:"Lines with slopes that are negative reciprocals."},
+{id:177,cat:"math",q:"What is a system of equations?",a:"Two or more equations with the same variables."},
+{id:178,cat:"math",q:"What is substitution method?",a:"Solving for one variable and substituting into other equation."},
+{id:179,cat:"math",q:"What is a function?",a:"Each input has exactly one output."},
+{id:180,cat:"math",q:"What is f(x)?",a:"Function notation meaning 'f of x' or the output when input is x."},
+{id:181,cat:"math",q:"What is the domain?",a:"All possible input (x) values of a function."},
+{id:182,cat:"math",q:"What is the range?",a:"All possible output (y) values of a function."},
+{id:183,cat:"math",q:"What is a quadratic equation?",a:"Equation with x² as highest power: ax² + bx + c = 0"},
+{id:184,cat:"math",q:"What is the quadratic formula?",a:"x = (−b ± √(b²−4ac)) / 2a"},
+{id:185,cat:"math",q:"How do you factor x² + 5x + 6?",a:"Find factors of 6 that add to 5: (x + 2)(x + 3)"},
+{id:186,cat:"math",q:"What is FOIL?",a:"First, Outer, Inner, Last - for multiplying binomials."},
+{id:187,cat:"math",q:"What is a² − b²?",a:"Difference of squares: (a + b)(a − b)"},
+{id:188,cat:"math",q:"What is (a + b)²?",a:"Perfect square trinomial: a² + 2ab + b²"},
+{id:189,cat:"math",q:"What is an inequality?",a:"Statement comparing values with <, >, ≤, or ≥."},
+{id:190,cat:"math",q:"When do you flip inequality sign?",a:"When multiplying or dividing by a negative number."},
+{id:191,cat:"math",q:"What is |x| = 5?",a:"x = 5 or x = −5 (distance of 5 from zero)."},
+{id:192,cat:"math",q:"What is an arithmetic sequence?",a:"Pattern where you add the same number each time."},
+{id:193,cat:"math",q:"What is a geometric sequence?",a:"Pattern where you multiply by the same number each time."},
+{id:194,cat:"math",q:"What is direct variation?",a:"y = kx where k is constant (y varies directly with x)."},
+{id:195,cat:"math",q:"What is inverse variation?",a:"xy = k or y = k/x (as x increases, y decreases)."},
+{id:196,cat:"math",q:"What is a polynomial?",a:"Expression with variables and coefficients using only +, −, ×."},
+{id:197,cat:"math",q:"What is degree of a polynomial?",a:"The highest exponent in the polynomial."},
+{id:198,cat:"math",q:"What is a monomial?",a:"Polynomial with one term (5x²)."},
+{id:199,cat:"math",q:"What is a binomial?",a:"Polynomial with two terms (x + 3)."},
+{id:200,cat:"math",q:"What is a trinomial?",a:"Polynomial with three terms (x² + 2x + 1)."},
+
+// MATH - Geometry (201-235)
+{id:201,cat:"math",q:"What is perimeter?",a:"Distance around a shape; sum of all sides."},
+{id:202,cat:"math",q:"What is area?",a:"Space inside a 2D shape; measured in square units."},
+{id:203,cat:"math",q:"What is volume?",a:"Space inside a 3D shape; measured in cubic units."},
+{id:204,cat:"math",q:"Area of rectangle?",a:"A = length × width"},
+{id:205,cat:"math",q:"Area of triangle?",a:"A = ½ × base × height"},
+{id:206,cat:"math",q:"Area of circle?",a:"A = πr²"},
+{id:207,cat:"math",q:"Circumference of circle?",a:"C = 2πr or C = πd"},
+{id:208,cat:"math",q:"Volume of rectangular prism?",a:"V = length × width × height"},
+{id:209,cat:"math",q:"Volume of cylinder?",a:"V = πr²h"},
+{id:210,cat:"math",q:"Volume of cone?",a:"V = ⅓πr²h"},
+{id:211,cat:"math",q:"Volume of sphere?",a:"V = (4/3)πr³"},
+{id:212,cat:"math",q:"What is the Pythagorean theorem?",a:"a² + b² = c² (for right triangles)"},
+{id:213,cat:"math",q:"What is a right angle?",a:"90 degrees"},
+{id:214,cat:"math",q:"What is an acute angle?",a:"Less than 90 degrees"},
+{id:215,cat:"math",q:"What is an obtuse angle?",a:"Between 90 and 180 degrees"},
+{id:216,cat:"math",q:"What is a straight angle?",a:"Exactly 180 degrees"},
+{id:217,cat:"math",q:"What are complementary angles?",a:"Two angles that add up to 90°."},
+{id:218,cat:"math",q:"What are supplementary angles?",a:"Two angles that add up to 180°."},
+{id:219,cat:"math",q:"What are vertical angles?",a:"Opposite angles formed by intersecting lines; they're equal."},
+{id:220,cat:"math",q:"What is an equilateral triangle?",a:"All three sides and angles are equal (60° each)."},
+{id:221,cat:"math",q:"What is an isosceles triangle?",a:"Two equal sides and two equal angles."},
+{id:222,cat:"math",q:"What is a scalene triangle?",a:"No equal sides or angles."},
+{id:223,cat:"math",q:"Sum of angles in a triangle?",a:"Always 180 degrees."},
+{id:224,cat:"math",q:"Sum of angles in a quadrilateral?",a:"Always 360 degrees."},
+{id:225,cat:"math",q:"What is a parallelogram?",a:"Quadrilateral with opposite sides parallel and equal."},
+{id:226,cat:"math",q:"What is a rhombus?",a:"Parallelogram with all sides equal."},
+{id:227,cat:"math",q:"What is a trapezoid?",a:"Quadrilateral with exactly one pair of parallel sides."},
+{id:228,cat:"math",q:"Area of parallelogram?",a:"A = base × height"},
+{id:229,cat:"math",q:"Area of trapezoid?",a:"A = ½(b₁ + b₂) × height"},
+{id:230,cat:"math",q:"What is pi (π)?",a:"Ratio of circumference to diameter; approximately 3.14159"},
+{id:231,cat:"math",q:"What is radius?",a:"Distance from center to edge of circle."},
+{id:232,cat:"math",q:"What is diameter?",a:"Distance across circle through center; d = 2r"},
+{id:233,cat:"math",q:"What are similar figures?",a:"Same shape but different sizes; proportional sides."},
+{id:234,cat:"math",q:"What are congruent figures?",a:"Same shape AND same size."},
+{id:235,cat:"math",q:"What is the distance formula?",a:"d = √[(x₂−x₁)² + (y₂−y₁)²]"},
+
+// MATH - Statistics (236-250)
+{id:236,cat:"math",q:"What is mean?",a:"Average; sum of values divided by count."},
+{id:237,cat:"math",q:"What is median?",a:"Middle value when data is ordered."},
+{id:238,cat:"math",q:"What is mode?",a:"Most frequently occurring value."},
+{id:239,cat:"math",q:"What is range?",a:"Difference between highest and lowest values."},
+{id:240,cat:"math",q:"What is probability?",a:"Likelihood of event occurring; favorable/total outcomes."},
+{id:241,cat:"math",q:"What is probability of certain event?",a:"1 (or 100%)"},
+{id:242,cat:"math",q:"What is probability of impossible event?",a:"0 (or 0%)"},
+{id:243,cat:"math",q:"What are independent events?",a:"One event doesn't affect another's probability."},
+{id:244,cat:"math",q:"What are dependent events?",a:"One event affects another's probability."},
+{id:245,cat:"math",q:"What is a scatter plot?",a:"Graph showing relationship between two variables."},
+{id:246,cat:"math",q:"What is positive correlation?",a:"Both variables increase together."},
+{id:247,cat:"math",q:"What is negative correlation?",a:"One increases as the other decreases."},
+{id:248,cat:"math",q:"What is no correlation?",a:"No pattern between variables."},
+{id:249,cat:"math",q:"What is standard deviation?",a:"Measure of how spread out data is from the mean."},
+{id:250,cat:"math",q:"What is an outlier?",a:"A data point far from the others."},
+
+// SCIENCE - Life Science (251-310)
+{id:251,cat:"science",q:"What is a cell?",a:"The basic unit of life."},
+{id:252,cat:"science",q:"What are the two main types of cells?",a:"Prokaryotic (no nucleus) and Eukaryotic (has nucleus)."},
+{id:253,cat:"science",q:"What is the nucleus?",a:"Control center containing DNA."},
+{id:254,cat:"science",q:"What is the cell membrane?",a:"Outer boundary controlling what enters/exits the cell."},
+{id:255,cat:"science",q:"What are mitochondria?",a:"Powerhouse of the cell; produces ATP energy."},
+{id:256,cat:"science",q:"What are ribosomes?",a:"Make proteins using instructions from DNA."},
+{id:257,cat:"science",q:"What is the endoplasmic reticulum (ER)?",a:"Network that transports materials; rough ER has ribosomes."},
+{id:258,cat:"science",q:"What is the Golgi apparatus?",a:"Packages and ships proteins."},
+{id:259,cat:"science",q:"What are lysosomes?",a:"Digest waste and worn-out parts."},
+{id:260,cat:"science",q:"What is the cytoplasm?",a:"Gel-like fluid filling the cell."},
+{id:261,cat:"science",q:"What do plant cells have that animal cells don't?",a:"Cell wall, chloroplasts, large central vacuole."},
+{id:262,cat:"science",q:"What are chloroplasts?",a:"Site of photosynthesis; contain chlorophyll."},
+{id:263,cat:"science",q:"What is photosynthesis?",a:"Plants convert sunlight, CO₂, and water into glucose and O₂."},
+{id:264,cat:"science",q:"What is the photosynthesis equation?",a:"6CO₂ + 6H₂O + light → C₆H₁₂O₆ + 6O₂"},
+{id:265,cat:"science",q:"What is cellular respiration?",a:"Cells break down glucose to release energy (ATP)."},
+{id:266,cat:"science",q:"What is the respiration equation?",a:"C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + ATP"},
+{id:267,cat:"science",q:"What is ATP?",a:"Adenosine triphosphate; cell's energy currency."},
+{id:268,cat:"science",q:"What is DNA?",a:"Deoxyribonucleic acid; genetic instructions."},
+{id:269,cat:"science",q:"What are the DNA bases?",a:"Adenine (A), Thymine (T), Guanine (G), Cytosine (C)."},
+{id:270,cat:"science",q:"How do DNA bases pair?",a:"A-T and G-C (complementary base pairing)."},
+{id:271,cat:"science",q:"What is RNA?",a:"Ribonucleic acid; carries genetic info from DNA."},
+{id:272,cat:"science",q:"How does RNA differ from DNA?",a:"Single-stranded, uses Uracil instead of Thymine."},
+{id:273,cat:"science",q:"What is a gene?",a:"Segment of DNA coding for a protein."},
+{id:274,cat:"science",q:"What is a chromosome?",a:"Tightly coiled DNA molecule."},
+{id:275,cat:"science",q:"How many chromosomes do humans have?",a:"46 (23 pairs)."},
+{id:276,cat:"science",q:"What is mitosis?",a:"Cell division producing 2 identical daughter cells."},
+{id:277,cat:"science",q:"What is meiosis?",a:"Cell division producing 4 sex cells with half the chromosomes."},
+{id:278,cat:"science",q:"What is a genotype?",a:"Genetic makeup (letters like Aa)."},
+{id:279,cat:"science",q:"What is a phenotype?",a:"Physical appearance/trait expressed."},
+{id:280,cat:"science",q:"What is a dominant allele?",a:"Expressed when one or two copies present (uppercase)."},
+{id:281,cat:"science",q:"What is a recessive allele?",a:"Only expressed when two copies present (lowercase)."},
+{id:282,cat:"science",q:"What is homozygous?",a:"Two identical alleles (AA or aa)."},
+{id:283,cat:"science",q:"What is heterozygous?",a:"Two different alleles (Aa)."},
+{id:284,cat:"science",q:"What is a Punnett square?",a:"Tool to predict offspring genotype probabilities."},
+{id:285,cat:"science",q:"What is natural selection?",a:"Organisms best adapted to environment survive and reproduce."},
+{id:286,cat:"science",q:"What is evolution?",a:"Change in species over time through genetic changes."},
+{id:287,cat:"science",q:"What is adaptation?",a:"Trait helping an organism survive in its environment."},
+{id:288,cat:"science",q:"What is an ecosystem?",a:"Community of organisms and their physical environment."},
+{id:289,cat:"science",q:"What is a food chain?",a:"Linear pathway of energy flow through organisms."},
+{id:290,cat:"science",q:"What is a food web?",a:"Interconnected food chains in an ecosystem."},
+{id:291,cat:"science",q:"What are producers?",a:"Organisms that make their own food (plants, algae)."},
+{id:292,cat:"science",q:"What are consumers?",a:"Organisms that eat other organisms."},
+{id:293,cat:"science",q:"What are decomposers?",a:"Break down dead matter (bacteria, fungi)."},
+{id:294,cat:"science",q:"What is the carbon cycle?",a:"Movement of carbon through organisms, atmosphere, and earth."},
+{id:295,cat:"science",q:"What is the nitrogen cycle?",a:"Movement of nitrogen through air, soil, and organisms."},
+{id:296,cat:"science",q:"What is the water cycle?",a:"Movement of water: evaporation, condensation, precipitation."},
+{id:297,cat:"science",q:"What is biodiversity?",a:"Variety of life forms in an ecosystem."},
+{id:298,cat:"science",q:"What is an enzyme?",a:"Protein that speeds up chemical reactions."},
+{id:299,cat:"science",q:"What is homeostasis?",a:"Body maintaining stable internal conditions."},
+{id:300,cat:"science",q:"What are the organ systems?",a:"Digestive, respiratory, circulatory, nervous, skeletal, muscular, etc."},
+{id:301,cat:"science",q:"What does the circulatory system do?",a:"Transports blood, nutrients, and oxygen through the body."},
+{id:302,cat:"science",q:"What does the respiratory system do?",a:"Exchanges oxygen and carbon dioxide."},
+{id:303,cat:"science",q:"What does the digestive system do?",a:"Breaks down food for nutrients."},
+{id:304,cat:"science",q:"What does the nervous system do?",a:"Sends electrical signals; controls body functions."},
+{id:305,cat:"science",q:"What does the immune system do?",a:"Defends against disease and infection."},
+{id:306,cat:"science",q:"What is mutualism?",a:"Both species benefit (bee and flower)."},
+{id:307,cat:"science",q:"What is parasitism?",a:"One benefits, other is harmed (tick and dog)."},
+{id:308,cat:"science",q:"What is commensalism?",a:"One benefits, other unaffected (barnacle on whale)."},
+{id:309,cat:"science",q:"What is symbiosis?",a:"Close relationship between two species."},
+{id:310,cat:"science",q:"What is carrying capacity?",a:"Maximum population an environment can support."},
+
+// SCIENCE - Physical Science (311-355)
+{id:311,cat:"science",q:"What is matter?",a:"Anything that has mass and takes up space."},
+{id:312,cat:"science",q:"What are the states of matter?",a:"Solid, liquid, gas, plasma."},
+{id:313,cat:"science",q:"What is an atom?",a:"Smallest unit of an element."},
+{id:314,cat:"science",q:"What are protons?",a:"Positive particles in the nucleus."},
+{id:315,cat:"science",q:"What are neutrons?",a:"Neutral particles in the nucleus."},
+{id:316,cat:"science",q:"What are electrons?",a:"Negative particles orbiting the nucleus."},
+{id:317,cat:"science",q:"What is atomic number?",a:"Number of protons; identifies the element."},
+{id:318,cat:"science",q:"What is mass number?",a:"Protons + neutrons in an atom."},
+{id:319,cat:"science",q:"What is an isotope?",a:"Atoms of same element with different neutron counts."},
+{id:320,cat:"science",q:"What is an ion?",a:"Atom with net charge (gained or lost electrons)."},
+{id:321,cat:"science",q:"What is a compound?",a:"Two or more elements chemically combined."},
+{id:322,cat:"science",q:"What is a mixture?",a:"Two or more substances physically combined."},
+{id:323,cat:"science",q:"What is an ionic bond?",a:"Electrons transferred between atoms (metal + nonmetal)."},
+{id:324,cat:"science",q:"What is a covalent bond?",a:"Electrons shared between atoms (nonmetals)."},
+{id:325,cat:"science",q:"What is the pH scale?",a:"Measures acidity/basicity; 0-14, 7 is neutral."},
+{id:326,cat:"science",q:"What is an acid?",a:"pH below 7; donates H+ ions."},
+{id:327,cat:"science",q:"What is a base?",a:"pH above 7; accepts H+ ions."},
+{id:328,cat:"science",q:"What is a chemical reaction?",a:"Process where substances change into new substances."},
+{id:329,cat:"science",q:"What is conservation of mass?",a:"Mass is neither created nor destroyed in reactions."},
+{id:330,cat:"science",q:"What is an endothermic reaction?",a:"Absorbs heat energy."},
+{id:331,cat:"science",q:"What is an exothermic reaction?",a:"Releases heat energy."},
+{id:332,cat:"science",q:"What is a catalyst?",a:"Speeds up reactions without being consumed."},
+{id:333,cat:"science",q:"What is Newton's 1st Law?",a:"Object at rest stays at rest; moving stays moving (inertia)."},
+{id:334,cat:"science",q:"What is Newton's 2nd Law?",a:"F = ma (Force = mass × acceleration)."},
+{id:335,cat:"science",q:"What is Newton's 3rd Law?",a:"Every action has equal and opposite reaction."},
+{id:336,cat:"science",q:"What is velocity?",a:"Speed with direction."},
+{id:337,cat:"science",q:"What is acceleration?",a:"Rate of change of velocity."},
+{id:338,cat:"science",q:"What is gravity?",a:"Force of attraction between objects with mass."},
+{id:339,cat:"science",q:"What is friction?",a:"Force opposing motion between surfaces."},
+{id:340,cat:"science",q:"What is kinetic energy?",a:"Energy of motion."},
+{id:341,cat:"science",q:"What is potential energy?",a:"Stored energy due to position or condition."},
+{id:342,cat:"science",q:"What is conservation of energy?",a:"Energy cannot be created or destroyed, only transformed."},
+{id:343,cat:"science",q:"What is work?",a:"Force × distance; W = Fd"},
+{id:344,cat:"science",q:"What is power?",a:"Rate of doing work; P = W/t"},
+{id:345,cat:"science",q:"What is a wave?",a:"Disturbance transferring energy through matter or space."},
+{id:346,cat:"science",q:"What is wavelength?",a:"Distance between wave crests."},
+{id:347,cat:"science",q:"What is frequency?",a:"Number of waves per second (Hertz)."},
+{id:348,cat:"science",q:"What is amplitude?",a:"Height of wave; relates to energy/loudness."},
+{id:349,cat:"science",q:"What is the electromagnetic spectrum?",a:"Range of EM waves: radio, micro, IR, visible, UV, X-ray, gamma."},
+{id:350,cat:"science",q:"What is electric current?",a:"Flow of electric charge; measured in amperes."},
+{id:351,cat:"science",q:"What is voltage?",a:"Electric potential difference; measured in volts."},
+{id:352,cat:"science",q:"What is resistance?",a:"Opposition to current flow; measured in ohms."},
+{id:353,cat:"science",q:"What is Ohm's Law?",a:"V = IR (Voltage = Current × Resistance)"},
+{id:354,cat:"science",q:"What is conduction?",a:"Heat transfer through direct contact."},
+{id:355,cat:"science",q:"What is convection?",a:"Heat transfer through fluid movement."},
+
+// SCIENCE - Earth Science (356-375)
+{id:356,cat:"science",q:"What is radiation (heat)?",a:"Heat transfer through electromagnetic waves."},
+{id:357,cat:"science",q:"What are Earth's layers?",a:"Crust, mantle, outer core, inner core."},
+{id:358,cat:"science",q:"What is plate tectonics?",a:"Theory that Earth's crust is divided into moving plates."},
+{id:359,cat:"science",q:"What happens at divergent boundaries?",a:"Plates move apart; new crust forms."},
+{id:360,cat:"science",q:"What happens at convergent boundaries?",a:"Plates collide; mountains form or subduction occurs."},
+{id:361,cat:"science",q:"What happens at transform boundaries?",a:"Plates slide past each other; earthquakes occur."},
+{id:362,cat:"science",q:"What are the three rock types?",a:"Igneous, sedimentary, metamorphic."},
+{id:363,cat:"science",q:"How do igneous rocks form?",a:"Cooled and solidified magma or lava."},
+{id:364,cat:"science",q:"How do sedimentary rocks form?",a:"Compressed and cemented sediments."},
+{id:365,cat:"science",q:"How do metamorphic rocks form?",a:"Changed by heat and pressure."},
+{id:366,cat:"science",q:"What is weathering?",a:"Breaking down rocks by water, ice, wind, or chemicals."},
+{id:367,cat:"science",q:"What is erosion?",a:"Movement of weathered material by water, wind, ice."},
+{id:368,cat:"science",q:"What are Earth's atmosphere layers?",a:"Troposphere, stratosphere, mesosphere, thermosphere."},
+{id:369,cat:"science",q:"Where does weather occur?",a:"Troposphere (lowest layer)."},
+{id:370,cat:"science",q:"What is the ozone layer?",a:"Part of stratosphere that absorbs UV radiation."},
+{id:371,cat:"science",q:"What causes seasons?",a:"Earth's tilted axis as it orbits the sun."},
+{id:372,cat:"science",q:"What is the greenhouse effect?",a:"Gases trap heat in atmosphere, warming Earth."},
+{id:373,cat:"science",q:"What causes tides?",a:"Gravitational pull of moon and sun on Earth's water."},
+{id:374,cat:"science",q:"What is the water cycle?",a:"Evaporation → condensation → precipitation → collection."},
+{id:375,cat:"science",q:"What is climate vs weather?",a:"Climate is long-term; weather is day-to-day conditions."},
+
+// SOCIAL STUDIES - Civics (376-420)
+{id:376,cat:"social",q:"What are the three branches of government?",a:"Executive, Legislative, Judicial."},
+{id:377,cat:"social",q:"What does the Executive branch do?",a:"Enforces laws; headed by the President."},
+{id:378,cat:"social",q:"What does the Legislative branch do?",a:"Makes laws; Congress (Senate + House)."},
+{id:379,cat:"social",q:"What does the Judicial branch do?",a:"Interprets laws; headed by Supreme Court."},
+{id:380,cat:"social",q:"What is checks and balances?",a:"Each branch can limit the power of others."},
+{id:381,cat:"social",q:"What is separation of powers?",a:"Government power divided among three branches."},
+{id:382,cat:"social",q:"What is federalism?",a:"Power shared between federal and state governments."},
+{id:383,cat:"social",q:"How many senators per state?",a:"2 (100 total)."},
+{id:384,cat:"social",q:"How many representatives total?",a:"435 (based on state population)."},
+{id:385,cat:"social",q:"What is the Bill of Rights?",a:"First 10 amendments to the Constitution."},
+{id:386,cat:"social",q:"What does the 1st Amendment protect?",a:"Freedom of speech, religion, press, assembly, petition."},
+{id:387,cat:"social",q:"What does the 2nd Amendment protect?",a:"Right to bear arms."},
+{id:388,cat:"social",q:"What does the 4th Amendment protect?",a:"Protection against unreasonable searches and seizures."},
+{id:389,cat:"social",q:"What does the 5th Amendment protect?",a:"Due process, no self-incrimination, double jeopardy."},
+{id:390,cat:"social",q:"What does the 6th Amendment guarantee?",a:"Right to speedy trial, lawyer, jury."},
+{id:391,cat:"social",q:"What does the 8th Amendment prohibit?",a:"Cruel and unusual punishment, excessive bail."},
+{id:392,cat:"social",q:"What is the 13th Amendment?",a:"Abolished slavery (1865)."},
+{id:393,cat:"social",q:"What is the 14th Amendment?",a:"Equal protection, due process, citizenship rights."},
+{id:394,cat:"social",q:"What is the 15th Amendment?",a:"Right to vote regardless of race."},
+{id:395,cat:"social",q:"What is the 19th Amendment?",a:"Women's right to vote (1920)."},
+{id:396,cat:"social",q:"What is judicial review?",a:"Supreme Court can declare laws unconstitutional."},
+{id:397,cat:"social",q:"What case established judicial review?",a:"Marbury v. Madison (1803)."},
+{id:398,cat:"social",q:"How many Supreme Court justices?",a:"9 justices."},
+{id:399,cat:"social",q:"Who can veto bills?",a:"The President."},
+{id:400,cat:"social",q:"How can Congress override a veto?",a:"Two-thirds vote in both houses."},
+{id:401,cat:"social",q:"What is the Electoral College?",a:"Body that elects President; 538 electors, need 270 to win."},
+{id:402,cat:"social",q:"What are reserved powers?",a:"Powers kept by states (10th Amendment)."},
+{id:403,cat:"social",q:"What are delegated powers?",a:"Powers given to federal government in Constitution."},
+{id:404,cat:"social",q:"What are concurrent powers?",a:"Powers shared by federal and state governments."},
+{id:405,cat:"social",q:"How old to be President?",a:"At least 35 years old."},
+{id:406,cat:"social",q:"How long is a Presidential term?",a:"4 years (max 2 terms)."},
+{id:407,cat:"social",q:"How long is a Senator's term?",a:"6 years."},
+{id:408,cat:"social",q:"How long is a Representative's term?",a:"2 years."},
+{id:409,cat:"social",q:"What is the Supremacy Clause?",a:"Federal law is supreme over state law."},
+{id:410,cat:"social",q:"What is due process?",a:"Government must follow fair procedures."},
+{id:411,cat:"social",q:"What is equal protection?",a:"Laws must apply equally to all people."},
+{id:412,cat:"social",q:"What is popular sovereignty?",a:"Government power comes from the people."},
+{id:413,cat:"social",q:"What is limited government?",a:"Government powers are restricted by law."},
+{id:414,cat:"social",q:"What is rule of law?",a:"Everyone, including leaders, must follow the law."},
+{id:415,cat:"social",q:"What is naturalization?",a:"Process for immigrants to become citizens."},
+{id:416,cat:"social",q:"What is civic duty?",a:"Responsibilities of citizens (voting, jury duty, taxes)."},
+{id:417,cat:"social",q:"What is impeachment?",a:"House charges official; Senate holds trial."},
+{id:418,cat:"social",q:"What is a filibuster?",a:"Extended speech to delay Senate vote."},
+{id:419,cat:"social",q:"What ends a filibuster?",a:"Cloture vote (60 senators)."},
+{id:420,cat:"social",q:"What is gerrymandering?",a:"Drawing district lines to favor a party."},
+
+// SOCIAL STUDIES - U.S. History (421-460)
+{id:421,cat:"social",q:"When was Declaration of Independence?",a:"July 4, 1776."},
+{id:422,cat:"social",q:"Who wrote the Declaration?",a:"Thomas Jefferson (primary author)."},
+{id:423,cat:"social",q:"What was the Revolutionary War?",a:"American colonies fought for independence from Britain (1775-1783)."},
+{id:424,cat:"social",q:"When was Constitution written?",a:"1787 (ratified 1788)."},
+{id:425,cat:"social",q:"What were the Federalist Papers?",a:"Essays supporting Constitution ratification."},
+{id:426,cat:"social",q:"Who was the first President?",a:"George Washington."},
+{id:427,cat:"social",q:"What was the Louisiana Purchase?",a:"1803; US bought land from France, doubling size."},
+{id:428,cat:"social",q:"What was Manifest Destiny?",a:"Belief US should expand across North America."},
+{id:429,cat:"social",q:"When was the Civil War?",a:"1861-1865."},
+{id:430,cat:"social",q:"What caused the Civil War?",a:"Slavery and states' rights issues."},
+{id:431,cat:"social",q:"Who was President during Civil War?",a:"Abraham Lincoln."},
+{id:432,cat:"social",q:"What did the Emancipation Proclamation do?",a:"Freed slaves in Confederate states (1863)."},
+{id:433,cat:"social",q:"What was Reconstruction?",a:"Period rebuilding South after Civil War (1865-1877)."},
+{id:434,cat:"social",q:"What was the Industrial Revolution?",a:"Shift to machine manufacturing (late 1800s)."},
+{id:435,cat:"social",q:"What was immigration at Ellis Island?",a:"Entry point for millions of immigrants (1892-1954)."},
+{id:436,cat:"social",q:"What was the Progressive Era?",a:"Reform movement addressing social problems (1890s-1920s)."},
+{id:437,cat:"social",q:"When did US enter World War I?",a:"1917."},
+{id:438,cat:"social",q:"What caused the Great Depression?",a:"Stock market crash of 1929; economic collapse."},
+{id:439,cat:"social",q:"What was the New Deal?",a:"FDR's programs to recover from Depression."},
+{id:440,cat:"social",q:"When did US enter World War II?",a:"December 1941 (after Pearl Harbor)."},
+{id:441,cat:"social",q:"What was the Holocaust?",a:"Nazi genocide of 6 million Jews."},
+{id:442,cat:"social",q:"When did WWII end?",a:"1945 (Europe May, Japan August)."},
+{id:443,cat:"social",q:"What was the Cold War?",a:"US-Soviet tension without direct war (1947-1991)."},
+{id:444,cat:"social",q:"What was the Korean War?",a:"1950-1953; US fought to stop communism in Korea."},
+{id:445,cat:"social",q:"What was Brown v. Board of Education?",a:"1954; declared school segregation unconstitutional."},
+{id:446,cat:"social",q:"What was the Civil Rights Movement?",a:"1950s-60s; fight for African American equality."},
+{id:447,cat:"social",q:"Who was Martin Luther King Jr.?",a:"Civil rights leader; advocated nonviolent protest."},
+{id:448,cat:"social",q:"What was the Civil Rights Act of 1964?",a:"Banned discrimination based on race, color, religion, sex."},
+{id:449,cat:"social",q:"What was the Vietnam War?",a:"US fought communism in Vietnam (1955-1975)."},
+{id:450,cat:"social",q:"What was Watergate?",a:"Nixon scandal leading to his resignation (1974)."},
+{id:451,cat:"social",q:"When did the Cold War end?",a:"1991 (Soviet Union dissolved)."},
+{id:452,cat:"social",q:"What happened on September 11, 2001?",a:"Terrorist attacks on World Trade Center and Pentagon."},
+{id:453,cat:"social",q:"What was the Great Recession?",a:"2007-2009 economic crisis."},
+{id:454,cat:"social",q:"Who was the first Black President?",a:"Barack Obama (2009-2017)."},
+{id:455,cat:"social",q:"What was the Boston Tea Party?",a:"1773; colonists dumped tea to protest British taxes."},
+{id:456,cat:"social",q:"What were Jim Crow laws?",a:"Laws enforcing racial segregation in South."},
+{id:457,cat:"social",q:"What was the 18th Amendment?",a:"Prohibition - banned alcohol (1919)."},
+{id:458,cat:"social",q:"What was the 21st Amendment?",a:"Repealed Prohibition (1933)."},
+{id:459,cat:"social",q:"What was the GI Bill?",a:"1944; provided benefits to WWII veterans."},
+{id:460,cat:"social",q:"What was the Space Race?",a:"US-Soviet competition; US landed on moon 1969."},
+
+// SOCIAL STUDIES - Economics (461-485)
+{id:461,cat:"social",q:"What is supply?",a:"Amount of product available."},
+{id:462,cat:"social",q:"What is demand?",a:"Amount consumers want to buy."},
+{id:463,cat:"social",q:"What is equilibrium price?",a:"Where supply equals demand."},
+{id:464,cat:"social",q:"What happens when demand increases?",a:"Prices rise."},
+{id:465,cat:"social",q:"What happens when supply increases?",a:"Prices fall."},
+{id:466,cat:"social",q:"What is scarcity?",a:"Limited resources vs unlimited wants."},
+{id:467,cat:"social",q:"What is opportunity cost?",a:"Value of next best alternative given up."},
+{id:468,cat:"social",q:"What is GDP?",a:"Gross Domestic Product; total value of goods/services produced."},
+{id:469,cat:"social",q:"What is inflation?",a:"General increase in prices over time."},
+{id:470,cat:"social",q:"What is deflation?",a:"General decrease in prices."},
+{id:471,cat:"social",q:"What is unemployment rate?",a:"Percentage of workforce without jobs."},
+{id:472,cat:"social",q:"What is the Federal Reserve?",a:"Central bank controlling money supply."},
+{id:473,cat:"social",q:"What is fiscal policy?",a:"Government using taxes and spending."},
+{id:474,cat:"social",q:"What is monetary policy?",a:"Fed controlling money supply and interest rates."},
+{id:475,cat:"social",q:"What is a monopoly?",a:"Single seller controlling a market."},
+{id:476,cat:"social",q:"What is competition?",a:"Multiple sellers competing for buyers."},
+{id:477,cat:"social",q:"What is a tariff?",a:"Tax on imported goods."},
+{id:478,cat:"social",q:"What is free trade?",a:"Trade without tariffs or restrictions."},
+{id:479,cat:"social",q:"What are the economic systems?",a:"Market, command, mixed, traditional."},
+{id:480,cat:"social",q:"What is capitalism?",a:"Private ownership; market-driven economy."},
+{id:481,cat:"social",q:"What is socialism?",a:"Government ownership of major industries."},
+{id:482,cat:"social",q:"What is a recession?",a:"Economic decline; two quarters of negative GDP."},
+{id:483,cat:"social",q:"What is a depression?",a:"Severe, prolonged recession."},
+{id:484,cat:"social",q:"What is interest?",a:"Cost of borrowing money."},
+{id:485,cat:"social",q:"What is a budget deficit?",a:"Government spending more than revenue."},
+
+// SOCIAL STUDIES - Geography (486-500)
+{id:486,cat:"social",q:"What is latitude?",a:"Lines measuring north-south position (parallels)."},
+{id:487,cat:"social",q:"What is longitude?",a:"Lines measuring east-west position (meridians)."},
+{id:488,cat:"social",q:"What is the equator?",a:"0° latitude; divides Earth into hemispheres."},
+{id:489,cat:"social",q:"What is the Prime Meridian?",a:"0° longitude; runs through Greenwich, England."},
+{id:490,cat:"social",q:"What are the continents?",a:"Africa, Antarctica, Asia, Australia, Europe, N. America, S. America."},
+{id:491,cat:"social",q:"What are the oceans?",a:"Pacific, Atlantic, Indian, Southern, Arctic."},
+{id:492,cat:"social",q:"What is a peninsula?",a:"Land surrounded by water on three sides."},
+{id:493,cat:"social",q:"What is an isthmus?",a:"Narrow strip connecting two larger land areas."},
+{id:494,cat:"social",q:"What is a delta?",a:"Sediment deposit at river mouth."},
+{id:495,cat:"social",q:"What is a plateau?",a:"Flat elevated landform."},
+{id:496,cat:"social",q:"What are push factors?",a:"Reasons people leave an area (war, poverty)."},
+{id:497,cat:"social",q:"What are pull factors?",a:"Reasons people move to an area (jobs, freedom)."},
+{id:498,cat:"social",q:"What is urbanization?",a:"Movement from rural to urban areas."},
+{id:499,cat:"social",q:"What is a natural resource?",a:"Material from nature used by humans."},
+{id:500,cat:"social",q:"What is sustainable development?",a:"Meeting current needs without compromising future resources."}
+];
+
+// State
+let currentCards = [...flashcards];
+let currentIndex = 0;
+let cardStatus = JSON.parse(localStorage.getItem('gedFlashcardStatus') || '{}');
+
+function init() {
+    updateStats();
+    displayCard();
+}
+
+function displayCard() {
+    if (currentCards.length === 0) {
+        document.getElementById('cardQuestion').textContent = 'No cards match your filter.';
+        document.getElementById('cardAnswer').textContent = 'Try selecting a different category.';
+        return;
+    }
+    
+    const card = currentCards[currentIndex];
+    const front = document.getElementById('cardFront');
+    
+    // Update front
+    document.getElementById('cardQuestion').textContent = card.q;
+    document.getElementById('cardCategory').textContent = getCategoryName(card.cat);
+    document.getElementById('cardCategory').className = 'card-category ' + card.cat;
+    document.getElementById('cardNumber').textContent = `${currentIndex + 1}/${currentCards.length}`;
+    front.className = 'card-face card-front ' + card.cat;
+    
+    // Update back
+    document.getElementById('cardAnswer').textContent = card.a;
+    document.getElementById('cardCategoryBack').textContent = getCategoryName(card.cat);
+    document.getElementById('cardCategoryBack').className = 'card-category ' + card.cat;
+    document.getElementById('cardNumberBack').textContent = `${currentIndex + 1}/${currentCards.length}`;
+    
+    // Reset flip
+    document.getElementById('flashcard').classList.remove('flipped');
+    
+    // Update progress
+    document.getElementById('progressFill').style.width = ((currentIndex + 1) / currentCards.length * 100) + '%';
+    
+    // Update rating buttons
+    const status = cardStatus[card.id];
+    document.querySelectorAll('.rate-btn').forEach(btn => btn.classList.remove('active'));
+    if (status === 'learned') document.querySelector('.rate-btn.learned').classList.add('active');
+    if (status === 'review') document.querySelector('.rate-btn.review').classList.add('active');
+}
+
+function getCategoryName(cat) {
+    const names = { rla: '📖 RLA', math: '🔢 Math', science: '🔬 Science', social: '🌍 Social' };
+    return names[cat] || cat;
+}
+
+function flipCard() {
+    document.getElementById('flashcard').classList.toggle('flipped');
+}
+
+function nextCard() {
+    if (currentCards.length === 0) return;
+    currentIndex = (currentIndex + 1) % currentCards.length;
+    displayCard();
+}
+
+function prevCard() {
+    if (currentCards.length === 0) return;
+    currentIndex = (currentIndex - 1 + currentCards.length) % currentCards.length;
+    displayCard();
+}
+
+function markCard(status) {
+    if (currentCards.length === 0) return;
+    const card = currentCards[currentIndex];
+    
+    if (cardStatus[card.id] === status) {
+        delete cardStatus[card.id];
+    } else {
+        cardStatus[card.id] = status;
+    }
+    
+    localStorage.setItem('gedFlashcardStatus', JSON.stringify(cardStatus));
+    updateStats();
+    displayCard();
+}
+
+function filterCards(filter) {
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    if (filter === 'all') {
+        currentCards = [...flashcards];
+    } else {
+        currentCards = flashcards.filter(card => card.cat === filter);
+    }
+    
+    currentIndex = 0;
+    displayCard();
+}
+
+function shuffleCards() {
+    for (let i = currentCards.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [currentCards[i], currentCards[j]] = [currentCards[j], currentCards[i]];
+    }
+    currentIndex = 0;
+    displayCard();
+}
+
+function resetProgress() {
+    if (confirm('Reset all progress? This cannot be undone.')) {
+        cardStatus = {};
+        localStorage.removeItem('gedFlashcardStatus');
+        updateStats();
+        displayCard();
+    }
+}
+
+function updateStats() {
+    let learned = 0, review = 0;
+    let rlaL = 0, mathL = 0, scienceL = 0, socialL = 0;
+    
+    Object.entries(cardStatus).forEach(([id, status]) => {
+        const card = flashcards.find(c => c.id === parseInt(id));
+        if (status === 'learned') {
+            learned++;
+            if (card) {
+                if (card.cat === 'rla') rlaL++;
+                if (card.cat === 'math') mathL++;
+                if (card.cat === 'science') scienceL++;
+                if (card.cat === 'social') socialL++;
+            }
+        }
+        if (status === 'review') review++;
+    });
+    
+    document.getElementById('learnedCount').textContent = learned;
+    document.getElementById('reviewCount').textContent = review;
+    
+    document.getElementById('rlaLearned').textContent = rlaL;
+    document.getElementById('mathLearned').textContent = mathL;
+    document.getElementById('scienceLearned').textContent = scienceL;
+    document.getElementById('socialLearned').textContent = socialL;
+    
+    document.getElementById('rlaFill').style.width = (rlaL / 125 * 100) + '%';
+    document.getElementById('mathFill').style.width = (mathL / 125 * 100) + '%';
+    document.getElementById('scienceFill').style.width = (scienceL / 125 * 100) + '%';
+    document.getElementById('socialFill').style.width = (socialL / 125 * 100) + '%';
+}
+
+// Keyboard controls
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') nextCard();
+    if (e.key === 'ArrowLeft') prevCard();
+    if (e.key === ' ') { e.preventDefault(); flipCard(); }
+    if (e.key === '1') markCard('learned');
+    if (e.key === '2') markCard('review');
+});
+
+// Touch swipe support
+let touchStartX = 0;
+document.getElementById('flashcard').addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+});
+document.getElementById('flashcard').addEventListener('touchend', (e) => {
+    const diff = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(diff) > 50) {
+        if (diff > 0) prevCard();
+        else nextCard();
+    }
+});
+
+init();
+</script>
+</body>
+</html>
